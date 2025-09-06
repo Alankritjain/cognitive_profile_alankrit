@@ -1,33 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cognitive Profile App</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <h1>Welcome to the Cognitive Profile App</h1>
-    <p>Select a test to begin:</p>
+{% extends "base.html" %}
+{% block title %}Cognitive Profile – Choose a Test{% endblock %}
+{% block content %}
 
-    <ul style="list-style-type: none; padding: 0;">
-        <!-- Working link to Digit Span Test -->
-        <li style="margin: 10px 0;">
-            <a href="{{ url_for('digit_span.instructions') }}">
-                Digit Span Test
-            </a>
-        </li>
+<div class="container py-5">
+  <!-- Student context header -->
+  {% if student %}
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Hello, {{ student.name or "Student" }}</h2>
+      <div class="text-muted">
+        Age: {{ student.age or "—" }} &nbsp;•&nbsp; Class: {{ student.class or "—" }}
+      </div>
+    </div>
+    <div>
+      <a href="{{ url_for('main.change_student') }}" class="btn btn-outline-secondary">Change Student</a>
+    </div>
+  </div>
+  {% endif %}
 
-        <!-- Placeholders for future tests -->
-        <li style="margin: 10px 0; color: gray;">
-            N-Back Test (Coming Soon)
-        </li>
-        <li style="margin: 10px 0; color: gray;">
-            Stroop Test (Coming Soon)
-        </li>
-        <li style="margin: 10px 0; color: gray;">
-            Spatial Memory Test (Coming Soon)
-        </li>
-    </ul>
-</body>
-</html>
+  <p class="text-muted mb-4">Select a module to begin:</p>
+
+  <div class="row g-4 tile-grid">
+    <!-- 1) WMC (active) -->
+    <div class="col-6 col-md-4">
+      <a href="{{ url_for('digit_span.instructions') }}" class="tile card shadow-sm border-0 h-100">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">🧠</div>
+          <h5 class="card-title mb-1">WMC</h5>
+          <p class="card-text text-muted small mb-0">Digit Span (Forward & Backward)</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 2) IRA -->
+    <div class="col-6 col-md-4">
+      <div class="tile card shadow-sm border-0 h-100 disabled-link">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">📚</div>
+          <h5 class="card-title mb-1">IRA</h5>
+          <p class="card-text text-muted small mb-0">Information Retrieval (soon)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3) ATT -->
+    <div class="col-6 col-md-4">
+      <div class="tile card shadow-sm border-0 h-100 disabled-link">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">🎯</div>
+          <h5 class="card-title mb-1">ATT</h5>
+          <p class="card-text text-muted small mb-0">Attention (soon)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4) META -->
+    <div class="col-6 col-md-4">
+      <div class="tile card shadow-sm border-0 h-100 disabled-link">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">🧭</div>
+          <h5 class="card-title mb-1">META</h5>
+          <p class="card-text text-muted small mb-0">Metacognition (soon)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5) IPS -->
+    <div class="col-6 col-md-4">
+      <div class="tile card shadow-sm border-0 h-100 disabled-link">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">⚡</div>
+          <h5 class="card-title mb-1">IPS</h5>
+          <p class="card-text text-muted small mb-0">Processing Speed (soon)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6) ALS -->
+    <div class="col-6 col-md-4">
+      <div class="tile card shadow-sm border-0 h-100 disabled-link">
+        <div class="card-body d-flex flex-column justify-content-center align-items-start p-4">
+          <div class="tile-icon mb-3">🎓</div>
+          <h5 class="card-title mb-1">ALS</h5>
+          <p class="card-text text-muted small mb-0">Active Learning Style (soon)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

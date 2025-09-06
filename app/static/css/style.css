@@ -1,0 +1,11 @@
+/* Tile grid aesthetics */
+.tile-grid .tile { text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+.tile-grid .tile:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+.tile-grid .tile .tile-icon { font-size: 2rem; line-height: 1; }
+
+/* Disabled tile behavior */
+.disabled-link { pointer-events: none; opacity: .6; }
+
+body { background: #f8fafc; }
+.card { border-radius: 1rem; }
+.btn { border-radius: .75rem; }

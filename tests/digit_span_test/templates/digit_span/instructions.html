@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Digit Span Test Instructions</title>
-  <link rel="stylesheet" href="{{ url_for('digit_span.static', filename='css/style.css') }}">
-
+    <link rel="stylesheet" href="{{ url_for('digit_span.static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
@@ -18,7 +17,14 @@
         </ul>
 
         <p>Click below to continue:</p>
-        <a href="{{ url_for('digit_span.setup') }}" class="start-btn">Start Setup</a>
+        <!-- FIX: start forward test instead of going to setup -->
+        <a href="{{ url_for('digit_span.start_test', mode='forward') }}" class="start-btn">Start Test</a>
+
+        {% if student %}
+        <p class="text-muted mt-2">
+            Student: {{ student.name }} | Age: {{ student.age }} | Class: {{ student.class }}
+        </p>
+        {% endif %}
     </div>
 </body>
 </html>

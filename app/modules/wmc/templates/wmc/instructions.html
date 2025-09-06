@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}WMC — Digit Span Instructions{% endblock %}
+{% block content %}
+<style>
+  .wmc-hero {
+    background: linear-gradient(180deg, #f5f7fb 0%, #ffffff 100%);
+  }
+  .wmc-card {
+    border: 0; border-radius: 16px; box-shadow: 0 20px 40px rgba(16,24,40,.08);
+  }
+  .check { color: #16a34a; }
+  .dot { width: 8px; height: 8px; background: #0ea5e9; border-radius: 999px; display: inline-block; margin-right: 6px; }
+  .pill { background: #eff6ff; color: #075985; border: 1px solid #e0f2fe; border-radius: 999px; font-weight: 600; font-size: 12px; padding: 6px 10px; }
+  .guide-item { display: flex; gap: 10px; align-items: flex-start; }
+  .guide-item i { color: #2563eb; }
+  .student-badge { background:#f3f4f6; border-radius: 10px; padding: 10px 12px; }
+  .cta-btn { background: #0ea5e9; border: none; }
+  .cta-btn:hover { background: #0284c7; }
+  .subtle-link { color: #64748b; text-decoration: none; }
+  .subtle-link:hover { color: #334155; }
+  @media (max-width: 991px) { .wmc-hero { padding-top: 8px!important; } }
+  .icon-circle { width: 44px; height: 44px; border-radius: 50%; background:#e0f2fe; display:flex; align-items:center; justify-content:center; color:#0369a1; font-weight:700; }
+</style>
+
+<div class="wmc-hero py-4 py-md-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card wmc-card overflow-hidden">
+          <div class="row g-0">
+            <!-- Left: Instructions -->
+            <div class="col-md-7 p-4 p-md-5">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="icon-circle">W</span>
+                <span class="pill">Working Memory Capacity</span>
+              </div>
+              <h1 class="h3 fw-bold mb-2">Digit Span — Instructions</h1>
+              <p class="text-muted mb-4">A short two‑phase test to measure your working memory. You’ll briefly see a sequence of digits, then enter them in order.</p>
+
+              <ul class="list-unstyled small mb-4">
+                <li class="mb-2"><span class="check">✔</span> <strong>Forward:</strong> Enter digits in the same order.</li>
+                <li class="mb-2"><span class="check">✔</span> <strong>Backward:</strong> Enter digits in reverse order (auto‑starts after Forward).</li>
+                <li class="mb-2"><span class="check">✔</span> <strong>N‑2 Span:</strong> In a grid of labeled nodes, type the digit shown <strong>two nodes earlier</strong>. 20 attempts, digits flash for 500ms.</li>
+                <li class="mb-2"><span class="check">✔</span> <strong>Stop rule:</strong> Forward/Backward phases end after two consecutive errors.</li>
+              </ul>
+
+              <div class="d-flex flex-wrap gap-2 mb-4">
+                <span class="pill">Estimated time: 2–4 min</span>
+                <span class="pill">No external aids</span>
+                <span class="pill">Quiet environment</span>
+              </div>
+
+              <div class="d-flex align-items-center gap-3">
+                <a class="btn btn-lg cta-btn text-white px-4" href="{{ url_for('wmc.start', mode='forward') }}">Start Test</a>
+                <a class="subtle-link" href="{{ url_for('main.tests') }}">Back to dashboard</a>
+              </div>
+            </div>
+
+            <!-- Right: Student & Tips -->
+            <div class="col-md-5 p-4 p-md-5 bg-light border-start">
+              {% if student %}
+              <div class="student-badge mb-3">
+                <div class="fw-semibold">Student</div>
+                <div class="small text-muted">{{ student.name }} &nbsp;•&nbsp; Age {{ student.age }} &nbsp;•&nbsp; Class {{ student.class }}</div>
+              </div>
+              {% endif %}
+
+              <div class="mb-3">
+                <div class="guide-item mb-2">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="fw-semibold">Focus on the digits</div>
+                    <div class="text-muted small">They will appear one at a time. Avoid distractions.</div>
+                  </div>
+                </div>
+                <div class="guide-item mb-2">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="fw-semibold">Use the on‑screen keypad</div>
+                    <div class="text-muted small">Submit after completing the sequence.</div>
+                  </div>
+                </div>
+                <div class="guide-item">
+                  <span class="dot"></span>
+                  <div>
+                    <div class="fw-semibold">Your progress is saved</div>
+                    <div class="text-muted small">We will guide you to the backward phase automatically.</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="small text-muted">By continuing, you agree to complete this module without assistance.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

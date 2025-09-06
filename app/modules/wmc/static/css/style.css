@@ -1,0 +1,33 @@
+/* General body styling */
+/* Keep minimal shared styles for instructions/setup pages */
+body.instructions {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f9fafc;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+.container.instructions {
+  background: #fff;
+  border-radius: 10px;
+  padding: 40px;
+  width: 600px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+a.start-btn, button.start-btn {
+  display: inline-block;
+  background-color: #2ecc71;
+  color: #fff;
+  padding: 12px 25px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background 0.3s ease;
+  margin-top: 20px;
+}
+a.start-btn:hover, button.start-btn:hover { background-color: #27ae60; }

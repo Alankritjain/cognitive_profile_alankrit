@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digit Span Test ({{ mode|capitalize }})</title>
+  <link rel="stylesheet" href="{{ url_for('wmc.static', filename='css/style.css') }}" />
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --fg: #101828;
+      --muted: #667085;
+      --card: #ffffff;
+      --primary: #0ea5e9;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --ring: rgba(14,165,233,0.25);
+    }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background: var(--bg); color: var(--fg); }
+
+    .shell { max-width: 1080px; margin: 32px auto; padding: 0 16px; }
+    .statusbar { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .badges { display: flex; gap: 8px; align-items: center; }
+    .badge { background: #e6f4ff; color: #0369a1; padding: 6px 10px; border-radius: 999px; font-weight: 600; font-size: 12px; letter-spacing: .2px; }
+    .lives { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 14px; }
+    .heart { color: #ef4444; font-size: 18px; }
+
+    .card { background: var(--card); border-radius: 16px; box-shadow: 0 12px 30px rgba(16,24,40,.08); padding: 24px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; }
+    @media (max-width: 900px) { .card { grid-template-columns: 1fr; } }
+
+    .display { padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .digits { font-weight: 800; font-size: 72px; line-height: 1; letter-spacing: 4px; color: #0f172a; min-height: 90px; display: flex; align-items: center; justify-content: center; }
+    .hint { margin-top: 8px; color: var(--muted); font-size: 14px; }
+    .progress { margin-top: 18px; height: 8px; background: #eef2f7; border-radius: 999px; overflow: hidden; width: 100%; }
+    .progress > div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), #38bdf8); transition: width 300ms ease; }
+
+    .io { border-left: 1px dashed #e6eaf0; padding-left: 24px; display: flex; flex-direction: column; }
+    .pillrow { display: flex; gap: 6px; flex-wrap: wrap; min-height: 34px; }
+    .pill { background: #f3f4f6; border: 1px solid #e5e7eb; padding: 6px 10px; border-radius: 999px; font-weight: 600; }
+    .actions { display: flex; gap: 10px; margin-top: 16px; }
+    .btn { border: none; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+    .btn:focus { outline: 3px solid var(--ring); outline-offset: 2px; }
+    .btn-primary { background: var(--success); color: white; flex: 1; }
+    .btn-clear { background: #f3f4f6; color: #111827; }
+
+    .keypad { margin-top: 12px; display: grid; grid-template-columns: repeat(3, 88px); gap: 14px; justify-content: center; }
+    .keypad button { height: 88px; border-radius: 18px; border: 1px solid #e5e7eb; background: #fff; box-shadow: 0 2px 0 rgba(0,0,0,0.02); font-size: 28px; font-weight: 700; cursor: pointer; transition: transform .05s ease, box-shadow .2s ease; }
+    .keypad button:hover { box-shadow: 0 6px 18px rgba(2,132,199,.15); }
+    .keypad button:active { transform: translateY(1px); }
+    .key-delete { background: #fee2e2; color: #991b1b; border-color: #fecaca; font-size: 18px; font-weight: 800; }
+
+    .muted { color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="statusbar">
+      <div class="badges">
+        <span class="badge">Mode: {{ mode|capitalize }}</span>
+        <span class="badge">Span: {{ span_length }}</span>
+      </div>
+      <div class="lives" aria-live="polite">
+        <span>Lives:</span>
+        {% set lives = session.get('lives', 2) %}
+        {% for i in range(lives) %}<span class="heart">❤</span>{% endfor %}
+        {% for i in range(2 - lives) %}<span class="heart" style="opacity:.25;">❤</span>{% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="display">
+        <div id="digit-display" class="digits">Ready?</div>
+        <div id="instruction-message" class="muted" style="margin-top:6px;">
+          {% if mode == "forward" %}
+            This is a <strong>Forward Test</strong>. Repeat the digits in the same order.
+          {% else %}
+            This is a <strong>Backward Test</strong>. Repeat the digits in reverse order.
+          {% endif %}
+        </div>
+        <div class="progress" aria-hidden="true"><div id="prog"></div></div>
+        <div id="user-sequence-display" class="pillrow" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="io">
+        <form id="digit-form" action="{{ url_for('wmc.check') }}" method="post">
+          <input type="hidden" id="user_sequence" name="user_sequence">
+          <div class="keypad" id="keypad" aria-disabled="true" style="opacity:.4; pointer-events:none;">
+            {% for num in range(1, 10) %}
+            <button type="button" aria-label="{{ num }}" onclick="addDigit('{{ num }}')">{{ num }}</button>
+            {% endfor %}
+            <button type="button" aria-label="0" onclick="addDigit('0')">0</button>
+            <button type="button" class="key-delete" onclick="deleteDigit()">Delete</button>
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-clear" onclick="clearDigits()">Clear</button>
+            <button type="submit" id="submit-btn" class="btn btn-primary" disabled>Submit</button>
+          </div>
+          <div class="muted" style="margin-top:10px;">
+            Tip: Use the on-screen keypad. Submission enables after digits show.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Overlay for backward phase */
+    .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.5); backdrop-filter: blur(2px); display:flex; align-items:center; justify-content:center; z-index: 1000; padding: 16px; }
+    .overlay-card { background:#fff; border-radius:16px; max-width: 720px; width: 100%; box-shadow: 0 24px 48px rgba(2,6,23,.25); padding: 24px; }
+    .pill { background:#eff6ff; color:#075985; border:1px solid #e0f2fe; border-radius:999px; padding:6px 10px; font-weight:700; font-size:12px; }
+    .btn-primary { background:#0ea5e9; border:none; }
+    .btn-primary:hover { background:#0284c7; }
+  </style>
+
+  {% if show_backward_overlay %}
+  <div class="overlay" id="overlay">
+    <div class="overlay-card">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <span class="pill">Backward Phase</span>
+        <span class="text-muted small">Digits must be entered in reverse order</span>
+      </div>
+      <h4 class="fw-bold">Before you continue</h4>
+      <ul class="text-muted small">
+        <li>The digits will flash as before.</li>
+        <li>Now enter them in <strong>reverse order</strong>.</li>
+        <li>Span resets to 2 and you have two lives per span length.</li>
+      </ul>
+      <button class="btn btn-primary" onclick="startAfterOverlay()">Start Backward Test</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <script>
+    const sequence = {{ sequence | tojson }};
+    let index = 0;
+
+    const displayEl = document.getElementById('digit-display');
+    const keypadEl = document.getElementById('keypad');
+    const submitBtn = document.getElementById('submit-btn');
+    const userSeqEl = document.getElementById('user_sequence');
+    const userViewEl = document.getElementById('user-sequence-display');
+    const progEl = document.getElementById('prog');
+
+    function showNextDigit() {
+      if (index < sequence.length) {
+        displayEl.textContent = sequence[index];
+        progEl.style.width = Math.round(((index + 1) / sequence.length) * 100) + '%';
+        index++;
+        setTimeout(showNextDigit, 800);
+      } else {
+        displayEl.textContent = 'Enter the sequence';
+        keypadEl.style.opacity = '1';
+        keypadEl.style.pointerEvents = 'auto';
+        submitBtn.disabled = false;
+      }
+    }
+
+    function renderChips() {
+      const s = userSeqEl.value.split('');
+      userViewEl.innerHTML = s.map(d => `<span class=\"pill\">${d}</span>`).join('');
+    }
+
+    function addDigit(d) {
+      userSeqEl.value += d;
+      renderChips();
+    }
+
+    function deleteDigit() {
+      userSeqEl.value = userSeqEl.value.slice(0, -1);
+      renderChips();
+    }
+
+    function clearDigits() {
+      userSeqEl.value = '';
+      renderChips();
+    }
+
+    const awaitOverlay = {{ 'true' if show_backward_overlay else 'false' }};
+
+    function startAfterOverlay() {
+      const ov = document.getElementById('overlay');
+      if (ov) ov.style.display = 'none';
+      setTimeout(showNextDigit, 500);
+    }
+
+    window.onload = function() {
+      if (awaitOverlay) {
+        // Wait for user to acknowledge overlay
+        return;
+      }
+      setTimeout(showNextDigit, 1000);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Cognitive Profiling Test — Setup{% endblock %}
+{% block content %}
+<style>
+  :root{ --primary:#0ea5e9; --ring:rgba(14,165,233,0.25); --muted:#64748b; }
+  .setup-wrap{ display:flex; justify-content:center; align-items:flex-start; padding: 48px 16px; }
+  .setup-card{ background:#fff; border-radius:16px; box-shadow:0 20px 40px rgba(16,24,40,.08); width:100%; max-width:720px; padding: 28px; }
+  .title{ font-weight:800; letter-spacing:.2px; }
+  .form-label{ font-weight:600; color:#111827; }
+  .form-control{ height: 44px; padding:10px 12px; border-radius:10px; }
+  .inline-age{ color: var(--muted); font-size:14px; margin-left:10px; }
+  .grades{ display:flex; flex-wrap:wrap; gap:8px; }
+  .grade{ padding:10px 14px; border-radius:10px; border:1px solid #e5e7eb; background:#f8fafc; cursor:pointer; font-weight:700; min-width:56px; text-align:center; }
+  .grade.selected{ background:#dbeafe; border-color:#60a5fa; box-shadow:0 0 0 2px rgba(59,130,246,.25); }
+  .btn-primary{ background:var(--primary); border:none; padding:12px 18px; border-radius:10px; font-weight:800; }
+  .btn-primary[disabled]{ background:#cbd5e1; cursor:not-allowed; }
+  .sub{ color:var(--muted); font-size:13px; }
+</style>
+
+<div class="setup-wrap">
+  <div class="setup-card">
+    <h2 class="title h4 mb-3">Cognitive Profiling Test</h2>
+    <p class="sub mb-4">Please enter your details to begin the Working Memory Capacity module.</p>
+
+    <form id="setup-form" method="POST" action="{{ url_for('wmc.setup') }}" novalidate>
+      <div class="mb-3">
+        <label class="form-label" for="name">Full Name</label>
+        <input type="text" class="form-control" id="name" name="name" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label" for="dob">Date of Birth</label>
+        <div class="d-flex align-items-center gap-2">
+          <input type="date" class="form-control" id="dob" required>
+          <span class="inline-age" id="age-view">Age: —</span>
+        </div>
+        <input type="hidden" id="age" name="age" value="">
+        <div class="form-text sub">Age must be between 10 and 18 years to take this module.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Class</label>
+        <div class="grades" id="grades">
+          {% set classes = ['VI','VII','VIII','IX','X','XI','XII'] %}
+          {% for g in classes %}
+            <div class="grade" data-grade="{{ g }}">{{ g }}</div>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="class" name="class" value="">
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button type="submit" id="start-btn" class="btn btn-primary" disabled>Start Test</button>
+        <a href="{{ url_for('main.tests') }}" class="btn btn-outline-secondary">Back</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const nameEl = document.getElementById('name');
+  const dobEl = document.getElementById('dob');
+  const ageEl = document.getElementById('age');
+  const ageView = document.getElementById('age-view');
+  const gradesEl = document.getElementById('grades');
+  const classEl = document.getElementById('class');
+  const startBtn = document.getElementById('start-btn');
+  const form = document.getElementById('setup-form');
+
+  function calcAge(dateStr){
+    if(!dateStr) return null;
+    const today = new Date();
+    const dob = new Date(dateStr);
+    if (isNaN(dob.getTime())) return null;
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) { age--; }
+    return age;
+  }
+
+  function setSelectedGrade(grade){
+    Array.from(gradesEl.children).forEach(g=>g.classList.remove('selected'));
+    if (grade){
+      const node = Array.from(gradesEl.children).find(g=>g.dataset.grade===grade);
+      if (node) node.classList.add('selected');
+    }
+    classEl.value = grade || '';
+    validate();
+  }
+
+  function validate(){
+    const nameOk = (nameEl.value || '').trim().length >= 2;
+    const ageVal = calcAge(dobEl.value);
+    const ageOk = ageVal !== null && ageVal >= 10 && ageVal <= 18;
+    ageEl.value = ageOk ? ageVal : '';
+    ageView.textContent = 'Age: ' + (ageOk ? ageVal + ' years' : '—');
+    const classOk = !!classEl.value;
+    startBtn.disabled = !(nameOk && ageOk && classOk);
+  }
+
+  dobEl.addEventListener('change', validate);
+  nameEl.addEventListener('input', validate);
+  gradesEl.addEventListener('click', (e)=>{
+    const t = e.target.closest('.grade');
+    if (!t) return;
+    setSelectedGrade(t.dataset.grade);
+  });
+
+  form.addEventListener('submit', (e)=>{
+    validate();
+    if (startBtn.disabled) {
+      e.preventDefault();
+    }
+  });
+
+  // Initial render
+  validate();
+</script>
+{% endblock %}

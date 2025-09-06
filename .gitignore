@@ -11,3 +11,35 @@ __pycache__/
 # ignore all .pyc files everywhere in the repository, as well as all
 *.pyc
 __pycache__/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.swp
+*.DS_Store
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Byte-compiled / optimized / DLL files
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# Flask/instance
+instance/
+
+# Local environment files
+.env
+.env.*
+
+# OS / misc
+Thumbs.db

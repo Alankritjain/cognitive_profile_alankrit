@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}WMC — N‑2 Span Test{% endblock %}
+{% block content %}
+<style>
+  :root {
+    --bg: #f5f7fb; --fg:#0f172a; --muted:#64748b; --primary:#0ea5e9; --accent:#2563eb; --success:#16a34a; --danger:#dc2626;
+  }
+  .n2-wrap { max-width: 1100px; margin: 0 auto; }
+  .n2-card { background: #fff; border-radius: 16px; box-shadow: 0 20px 40px rgba(16,24,40,.08); padding: 20px; }
+  .header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom: 8px; }
+  .badge { background:#e6f4ff; color:#0369a1; border-radius:999px; padding:6px 10px; font-weight:700; font-size:12px; letter-spacing:.2px; }
+  .score { color: var(--muted); font-size: 14px; }
+  .line { padding: 8px 6px; }
+  .nodes { display:grid; grid-template-columns: repeat(10, minmax(60px, 1fr)); grid-auto-rows: 90px; gap: 12px; align-items:center; justify-items: center; }
+  @media (max-width: 992px) { .nodes { grid-template-columns: repeat(8, minmax(60px, 1fr)); } }
+  @media (max-width: 768px) { .nodes { grid-template-columns: repeat(6, minmax(56px, 1fr)); } }
+  @media (max-width: 520px) { .nodes { grid-template-columns: repeat(5, minmax(52px, 1fr)); } }
+  .node { position:relative; width: 100%; background:#f8fafc; border:1px solid #e5e7eb; border-radius: 12px; height: 90px; display:flex; align-items:center; justify-content:center; flex-direction:column; transition: background .15s ease, color .15s ease, border-color .15s ease, box-shadow .2s ease; }
+  .node .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; transition: color .15s ease; }
+  .node .digit { font-size: 28px; font-weight: 800; color: #0f172a; opacity:0; transition: opacity .15s ease, color .15s ease; }
+  .node.show .digit { opacity: 1; }
+  .node.highlight { background:#dbeafe; border-color:#1d4ed8; box-shadow: 0 0 0 2px rgba(29,78,216,0.25); }
+  .node.highlight .label { color:#1e40af; }
+  .node.highlight .digit { color:#1e3a8a; }
+  .node.highlight-ok { background:#dcfce7; border-color:#16a34a; box-shadow: 0 0 0 2px rgba(22,163,74,0.25); }
+  .node.highlight-ok .label, .node.highlight-ok .digit { color:#14532d; }
+  .node.highlight-no { background:#fee2e2; border-color:#dc2626; box-shadow: 0 0 0 2px rgba(220,38,38,0.25); }
+  .node.highlight-no .label, .node.highlight-no .digit { color:#7f1d1d; }
+  .io { margin-top: 14px; display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+  .form-control { height: 44px; font-size: 18px; padding: 8px 12px; border-radius: 10px; }
+  .btn-primary { background: var(--accent); border: none; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .finish { text-align:center; padding: 20px 10px; }
+  .feedback { min-height: 24px; font-weight: 700; }
+  .feedback.ok { color: var(--success); }
+  .feedback.no { color: var(--danger); }
+
+  /* Intro overlay */
+  .overlay { position: fixed; inset: 0; background: rgba(2,6,23,.5); backdrop-filter: blur(2px); display:flex; align-items:center; justify-content:center; z-index: 1000; padding: 16px; }
+  .overlay-card { background:#fff; border-radius:16px; max-width: 720px; width: 100%; box-shadow: 0 24px 48px rgba(2,6,23,.25); padding: 24px; }
+  .overlay .pill { background:#eff6ff; color:#075985; border:1px solid #e0f2fe; border-radius:999px; padding:6px 10px; font-weight:700; font-size:12px; }
+  .overlay .btn { background:#0ea5e9; border:none; }
+  .overlay .btn:hover { background:#0284c7; }
+</style>
+
+<div class="n2-wrap">
+  <div class="n2-card">
+    <div class="header">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge">N‑2 Span</span>
+        <span class="text-muted">Recall the digit from two steps earlier</span>
+      </div>
+      <div class="score">
+        Attempt <span id="attempt">0</span>/{{ attempts }} • Correct <span id="correct">0</span>
+      </div>
+    </div>
+
+    <div class="line">
+      <div class="nodes" id="nodes">
+        {% for lb in labels %}
+        <div class="node" data-index="{{ loop.index0 }}">
+          <div class="label">{{ lb }}</div>
+          <div class="digit" id="d-{{ loop.index0 }}"></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <form class="io" id="answer-form">
+      <input type="number" class="form-control" id="answer" placeholder="Enter digit from highlighted node" inputmode="numeric" min="0" max="9" required />
+      <button type="submit" class="btn btn-primary">Submit</button>
+      <div class="muted">Digits flash for 500ms. Starting from the {{ offset + 1 }}<sup>th</sup> node, recall the digit from two nodes earlier.</div>
+    </form>
+
+    <div id="feedback" class="feedback" aria-live="polite"></div>
+
+    <div class="finish d-none" id="finish">
+      <h5 class="mb-2">Great job!</h5>
+      <p class="text-muted">We’re saving your score…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const digits = {{ digits | tojson }};  // length = attempts + offset
+  const attempts = {{ attempts }};
+  const offset = {{ offset }}; // 2 for N-2
+
+  const nodesEl = document.getElementById('nodes');
+  const answerForm = document.getElementById('answer-form');
+  const answerInput = document.getElementById('answer');
+  const attemptEl = document.getElementById('attempt');
+  const correctEl = document.getElementById('correct');
+  const finishEl = document.getElementById('finish');
+
+  let step = 0;       // index of node being displayed (0..digits.length-1)
+  let asked = 0;      // attempts asked so far (0..attempts)
+  let correct = 0;    // correct answers count
+  let currentTarget = null; // index of node to recall
+
+  const nodeAt = i => nodesEl.children[i];
+  const digitAt = i => document.getElementById('d-' + i);
+
+  function flash(i) {
+    const n = nodeAt(i);
+    const d = digitAt(i);
+    n.classList.add('show');
+    d.textContent = digits[i];
+    d.parentElement.classList.add('show');
+    // Show for 500ms
+    setTimeout(() => {
+      d.parentElement.classList.remove('show');
+      d.textContent = '';
+      if (i >= offset) {
+        // Highlight the node to recall (i - offset)
+        currentTarget = i - offset;
+        highlight(currentTarget);
+        promptFor(currentTarget);
+      } else {
+        // Continue to next without input
+        advance();
+      }
+    }, 500);
+  }
+
+  function highlight(targetIndex) {
+    Array.from(nodesEl.children).forEach(c => c.classList.remove('highlight'));
+    const n = nodeAt(targetIndex);
+    n.classList.add('highlight');
+    // Ensure visibility by scrolling if needed
+    n.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+
+  function promptFor(targetIndex) {
+    asked += 1;
+    attemptEl.textContent = asked;
+    answerInput.value = '';
+    answerInput.focus();
+    // Attach submit handler per prompt
+    answerForm.onsubmit = (e) => {
+      e.preventDefault();
+      const val = String(answerInput.value || '').trim();
+      if (val === '') return;
+      const ok = (val === String(digits[targetIndex]));
+      showFeedback(ok, digits[targetIndex]);
+      // Visual highlight feedback
+      clearHighlights();
+      const node = nodeAt(targetIndex);
+      node.classList.add(ok ? 'highlight-ok' : 'highlight-no');
+      if (ok) { correct += 1; correctEl.textContent = correct; }
+      setTimeout(() => {
+        clearHighlights();
+        advance();
+      }, 400);
+    };
+  }
+
+  function clearHighlights() {
+    Array.from(nodesEl.children).forEach(c => c.classList.remove('highlight', 'highlight-ok', 'highlight-no'));
+  }
+
+  function showFeedback(ok, expected) {
+    const fb = document.getElementById('feedback');
+    fb.classList.remove('ok', 'no');
+    if (ok) {
+      fb.textContent = 'Correct';
+      fb.classList.add('ok');
+    } else {
+      fb.textContent = 'Incorrect';
+      fb.classList.add('no');
+    }
+    // Fade message after 1.2s
+    setTimeout(() => { fb.textContent=''; fb.classList.remove('ok','no'); }, 1200);
+  }
+
+  function advance() {
+    step += 1;
+    if (asked >= attempts) {
+      finish();
+    } else if (step < digits.length) {
+      flash(step);
+    } else {
+      // Safety net: if digits ended but attempts not yet met
+      finish();
+    }
+  }
+
+  function finish() {
+    answerForm.classList.add('d-none');
+    finishEl.classList.remove('d-none');
+    // Post results and redirect to WMC result
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{{ url_for('wmc.n2_submit') }}';
+    form.innerHTML = '<input type="hidden" name="correct" value="' + correct + '">' +
+                     '<input type="hidden" name="attempts" value="' + attempts + '">';
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  // Intro overlay
+  function startN2() {
+    const ov = document.getElementById('overlay');
+    ov.style.display = 'none';
+    flash(step);
+  }
+
+  window.addEventListener('load', () => {
+    // wait for user to start
+  });
+</script>
+<!-- Overlay Instructions -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <span class="pill">N‑2 Span</span>
+      <span class="text-muted small">Short working‑memory challenge</span>
+    </div>
+    <h4 class="fw-bold">How this works</h4>
+    <ul class="text-muted small">
+      <li>Digits briefly appear on labeled nodes (A, B, C, …).</li>
+      <li>Starting a few nodes in, type the digit from <strong>two nodes earlier</strong>.</li>
+      <li>The node you must recall from is <strong>highlighted</strong>.</li>
+      <li>There are exactly <strong>{{ attempts }}</strong> attempts. Try to be as accurate as possible.</li>
+    </ul>
+    <button class="btn btn-primary" onclick="startN2()">Start N‑2 Test</button>
+  </div>
+  </div>
+{% endblock %}

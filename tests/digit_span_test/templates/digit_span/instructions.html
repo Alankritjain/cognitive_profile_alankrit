@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Digit Span Test - Instructions</title>
+    <title>Digit Span Test Instructions</title>
+  <link rel="stylesheet" href="{{ url_for('digit_span.static', filename='css/style.css') }}">
+
 </head>
 <body>
-    <h1>Digit Span Test Instructions</h1>
-    <p>Welcome to the Digit Span Test.</p>
-    <p>You will see a sequence of digits appear on the screen, one at a time.</p>
-    <ul>
-        <li><strong>Forward Test:</strong> Repeat the digits in the same order.</li>
-        <li><strong>Backward Test:</strong> Repeat the digits in reverse order.</li>
-    </ul>
-    <p>Click below to continue:</p>
+    <div class="container">
+        <h1>🔢 Digit Span Test Instructions</h1>
+        <p>Welcome to the Digit Span Test.</p>
+        <p>You will see a sequence of digits appear on the screen, one at a time.</p>
 
-    <a href="{{ url_for('digit_span.setup') }}">Start Setup</a>
+        <ul>
+            <li><strong>Forward Test:</strong> Repeat the digits in the same order.</li>
+            <li><strong>Backward Test:</strong> Repeat the digits in reverse order.</li>
+        </ul>
+
+        <p>Click below to continue:</p>
+        <a href="{{ url_for('digit_span.setup') }}" class="start-btn">Start Setup</a>
+    </div>
 </body>
 </html>

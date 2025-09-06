@@ -1,42 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digit Span Test</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script>
-        let digits = {{ sequence | tojson }};
-        let index = 0;
-
-        function showNextDigit() {
-            if (index < digits.length) {
-                document.getElementById("digit-display").innerText = digits[index];
-                index++;
-                setTimeout(showNextDigit, 1000);
-            } else {
-                document.getElementById("digit-display").innerText = "Now enter the sequence:";
-                document.getElementById("input-section").style.display = "block";
-            }
-        }
-
-        window.onload = function() {
-            showNextDigit();
-        }
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digit Span Test ({{ mode|capitalize }})</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fb;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 15px 30px;
+      font-size: 1em;
+      color: #2c3e50;
+    }
+    header div {
+      margin-left: 20px;
+    }
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 1100px;
+      margin: auto;
+      padding: 30px;
+    }
+    .left-panel {
+      width: 55%;
+      text-align: center;
+    }
+    #digit-display {
+      font-size: 6em;
+      font-weight: bold;
+      color: #2c3e50;
+      margin: 80px 0;
+    }
+    #instruction-message {
+      font-size: 1.5em;
+      margin-top: 40px;
+      color: #34495e;
+    }
+    .right-panel {
+      width: 40%;
+      padding: 20px;
+    }
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 90px);
+      grid-gap: 20px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+    .keypad button {
+      height: 90px;
+      font-size: 1.8em;
+      border-radius: 50%;
+      border: none;
+      background: #ecf0f1;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .keypad button:hover {
+      background: #3498db;
+      color: white;
+    }
+    .delete-btn {
+      background: #e74c3c;
+      color: white;
+    }
+    .submit-btn {
+      margin-top: 30px;
+      width: 100%;
+      padding: 18px;
+      font-size: 1.2em;
+      background: #2ecc71;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+    .submit-btn:hover {
+      background: #27ae60;
+    }
+    #user-sequence-display {
+      margin-top: 20px;
+      font-size: 1.3em;
+      text-align: center;
+      min-height: 30px;
+      color: #34495e;
+    }
+  </style>
 </head>
 <body>
-    <h1>Digit Span Test ({{ mode|capitalize }} Mode)</h1>
-    <p><strong>Current Span Length:</strong> {{ span_length }}</p>
+  <!-- Top info bar -->
+  <header>
+    <div><strong>Mode:</strong> {{ mode|capitalize }}</div>
+    <div><strong>Span:</strong> {{ span_length }}</div>
+    <div><strong>Lives:</strong> {{ session.get("lives", 2) }}</div>
+  </header>
 
-    <div id="digit-display" style="font-size: 2em; margin: 20px;">Get ready...</div>
-
-    <div id="input-section" style="display:none;">
-        <form action="{{ url_for('digit_span.check_sequence') }}" method="post">
-            <label for="user_sequence">Enter the sequence:</label><br>
-            <input type="text" id="user_sequence" name="user_sequence" required><br><br>
-            <button type="submit">Submit</button>
-        </form>
+  <div class="container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <div id="digit-display">Get ready...</div>
+      <div id="instruction-message">
+        {% if mode == "forward" %}
+          This is a <strong>Forward Test</strong>. Repeat the digits in the same order.
+        {% else %}
+          This is a <strong>Backward Test</strong>. Repeat the digits in reverse order.
+        {% endif %}
+      </div>
+      <div id="user-sequence-display"></div>
     </div>
+
+    <!-- Right Panel (Keypad) -->
+    <div class="right-panel">
+      <form id="digit-form" action="{{ url_for('digit_span.check_sequence') }}" method="post">
+        <input type="hidden" id="user_sequence" name="user_sequence">
+        <div class="keypad" id="keypad" style="display:none;">
+          {% for num in range(1, 10) %}
+          <button type="button" onclick="addDigit('{{ num }}')">{{ num }}</button>
+          {% endfor %}
+          <button type="button" onclick="addDigit('0')">0</button>
+          <button type="button" class="delete-btn" onclick="deleteDigit()">Delete</button>
+        </div>
+        <button type="submit" id="submit-btn" class="submit-btn" style="display:none;">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let sequence = {{ sequence | tojson }};
+    let index = 0;
+
+    // Show digits one by one in big font
+    function showNextDigit() {
+      if (index < sequence.length) {
+        document.getElementById("digit-display").innerText = sequence[index];
+        index++;
+        setTimeout(showNextDigit, 1000);
+      } else {
+        document.getElementById("digit-display").innerText = "Now enter the sequence:";
+        document.getElementById("keypad").style.display = "grid";
+        document.getElementById("submit-btn").style.display = "block";
+      }
+    }
+
+    // Keypad logic
+    function addDigit(digit) {
+      let inputField = document.getElementById("user_sequence");
+      inputField.value += digit;
+      document.getElementById("user-sequence-display").innerText = inputField.value;
+    }
+
+    function deleteDigit() {
+      let inputField = document.getElementById("user_sequence");
+      inputField.value = inputField.value.slice(0, -1);
+      document.getElementById("user-sequence-display").innerText = inputField.value;
+    }
+
+    // Start test after short delay
+    window.onload = function() {
+      setTimeout(showNextDigit, 2000); // show first digit after 2 sec pause
+    }
+  </script>
 </body>
 </html>

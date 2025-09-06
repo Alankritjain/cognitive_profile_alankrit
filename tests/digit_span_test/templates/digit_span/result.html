@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Span Test - Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Digit Span Test Results</h1>
+
+    {% if result %}
+        <p><strong>{{ result.name }}</strong> (Age: {{ result.age }}, Class: {{ result.class }})</p>
+
+        <table border="1" cellpadding="8">
+            <tr><th>Forward Raw Score</th><td>{{ result.forward_raw_score }}</td></tr>
+            <tr><th>Forward Z-Score</th><td>{{ result.forward_z_score }}</td></tr>
+            <tr><th>Forward Percentile</th><td>{{ result.forward_percentile }}</td></tr>
+            <tr><th>Forward Category</th><td>{{ result.forward_category }}</td></tr>
+            <tr><th>Backward Raw Score</th><td>{{ result.backward_raw_score }}</td></tr>
+            <tr><th>Backward Z-Score</th><td>{{ result.backward_z_score }}</td></tr>
+            <tr><th>Backward Percentile</th><td>{{ result.backward_percentile }}</td></tr>
+            <tr><th>Backward Category</th><td>{{ result.backward_category }}</td></tr>
+        </table>
+
+        <form action="{{ url_for('digit_span.result') }}" method="get">
+            <input type="hidden" name="format" value="json">
+            <button type="submit">Download Results (JSON)</button>
+        </form>
+    {% else %}
+        <p>No results available. Please take the <a href="{{ url_for('digit_span.setup') }}">Digit Span Test</a>.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('main.home') }}">Return to Home</a></p>
+</body>
+</html>

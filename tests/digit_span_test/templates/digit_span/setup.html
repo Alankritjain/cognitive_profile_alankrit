@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Digit Span Test - Setup</title>
+</head>
+<body>
+    <h1>Digit Span Test Setup</h1>
+    <p>Please enter your details before starting the test:</p>
+
+    <form method="post">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="age">Age:</label><br>
+        <input type="number" id="age" name="age" required><br><br>
+
+        <label for="class">Class:</label><br>
+        <input type="text" id="class" name="class" required><br><br>
+
+        <label for="mode">Select Mode:</label><br>
+        <select id="mode" name="mode">
+            <option value="forward">Forward</option>
+            <option value="backward">Backward</option>
+        </select><br><br>
+
+        <button type="submit">Start Test</button>
+    </form>
+</body>
+</html>

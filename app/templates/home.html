@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognitive Profile App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Welcome to the Cognitive Profile App</h1>
+    <p>Select a test to begin:</p>
+
+    <ul style="list-style-type: none; padding: 0;">
+        <!-- Working link to Digit Span Test -->
+        <li style="margin: 10px 0;">
+            <a href="{{ url_for('digit_span.instructions') }}">
+                Digit Span Test
+            </a>
+        </li>
+
+        <!-- Placeholders for future tests -->
+        <li style="margin: 10px 0; color: gray;">
+            N-Back Test (Coming Soon)
+        </li>
+        <li style="margin: 10px 0; color: gray;">
+            Stroop Test (Coming Soon)
+        </li>
+        <li style="margin: 10px 0; color: gray;">
+            Spatial Memory Test (Coming Soon)
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digit Span Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        let digits = {{ sequence | tojson }};
+        let index = 0;
+
+        function showNextDigit() {
+            if (index < digits.length) {
+                document.getElementById("digit-display").innerText = digits[index];
+                index++;
+                setTimeout(showNextDigit, 1000);
+            } else {
+                document.getElementById("digit-display").innerText = "Now enter the sequence:";
+                document.getElementById("input-section").style.display = "block";
+            }
+        }
+
+        window.onload = function() {
+            showNextDigit();
+        }
+    </script>
+</head>
+<body>
+    <h1>Digit Span Test ({{ mode|capitalize }} Mode)</h1>
+    <p><strong>Current Span Length:</strong> {{ span_length }}</p>
+
+    <div id="digit-display" style="font-size: 2em; margin: 20px;">Get ready...</div>
+
+    <div id="input-section" style="display:none;">
+        <form action="{{ url_for('digit_span.check_sequence') }}" method="post">
+            <label for="user_sequence">Enter the sequence:</label><br>
+            <input type="text" id="user_sequence" name="user_sequence" required><br><br>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>
